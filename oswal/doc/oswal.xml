@@ -97,12 +97,14 @@ document { // this is how the configuration file starts
 </example>
 Whitespace consisting of ASCII characters 0x09 (horizontal tab), 0x0a
 (newline), 0x0d (carriage return) and 0x20 (space) is ignored. Strings
-start with `"', end with the first subsequent `"' and can contain any
-characters except 0x00 and `"'. In particular, strings can contain
-linebreaks. Single-line comments start with either `#' or `//' and
-continue until the end of line (a newline). Multi-line comments start
-with `/*' and end with the first subsequent `*/'. Comments are ignored.
-The comment characters are not parsed specially within strings, i. e.
+start with `<code>"</code>', end with the first subsequent
+`<code>"</code>' and can contain any characters except 0x00 and
+`<code>"</code>'. In particular, strings can contain linebreaks.
+Single-line comments start with either `<code>#</code>' or
+`<code>//</code>' and continue until the end of line (a newline).
+Multi-line comments start with `<code>/*</code>' and end with the first
+subsequent `<code>*/</code>'. Comments are ignored.  The comment
+characters are not parsed specially within strings, i. e.
 <example><title />
 <programlisting><![CDATA["hello /* world */"]]></programlisting>
 </example>
