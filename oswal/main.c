@@ -44,7 +44,9 @@ void compose_xhtml();
 int main( int argc, char *argv[] )
 {
 	int nfds, done_reading = 0, i;
-	cfg_file_in = fopen( cfg_file, "r" );
+	if( !( cfg_file_in = fopen( cfg_file, "r" ) ) )
+		/* FIXME: some kind of error message necessary */
+		return 1;
 	cfg_file_parse();
 	p_index = ( int * )malloc( sizeof( int ) * cfg_n_modules );
 	buf_sizes = ( int * )malloc( sizeof( int ) * cfg_n_modules );
