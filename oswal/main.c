@@ -8,6 +8,8 @@
 
 char *cfg_file = "oswal.conf"; /* any good way to make it variable? */
 extern FILE *cfg_file_in;
+/*extern FILE *template_in;
+extern struct node *root_template;*/
 struct module_def *cfg_modules; /* list of modules */
 char *cfg_loader_path = "loader", /* FIXME: should be variable */
      *cfg_template, *cfg_module_template;
@@ -93,6 +95,7 @@ int main( int argc, char *argv[] )
 		buf_sizes[ i ] = INIT_BUF_SIZE;
 		buf[ i ] = ( char * )malloc( sizeof( char ) *
 			INIT_BUF_SIZE );
+		*buf[ i ] = '\0';
 		ptr[ i ] = buf[ i ];
 		/* update highest-numbered fd if necessary */
 		if( nfds < from_loader[ 0 ] )
@@ -144,7 +147,9 @@ int main( int argc, char *argv[] )
 				}
 		}
 	}
-	compose_xhtml();
+	/*template_in = fopen( root_template -> location, "r" );*/
+	template_init();
+	template_lex();
 	return 0;
 }
 
@@ -199,42 +204,5 @@ void get_pointers( int fd, int **buf_size, char ***p_buf, char ***p_ptr)
 		*p_buf = &buf[ i ];
 		*p_ptr = &ptr[ i ];
 	}
-}
-
-void compose_xhtml() /* FIXME (everything) */
-{
-	int i;
-	FILE *t, *m_t;
-	char the_whole_thing[ 0x100000 ], template[ 0x10000 ],
-		template2[ 0x10000 ], tmp[ 0x20000 ], *tmp2 = NULL;
-	t = fopen( cfg_template, "r" );
-	m_t = fopen( cfg_module_template, "r" );
-	i = fread( template, 1, sizeof( template ) - 1, t );
-	template[ i ] = '\0';
-	fclose( t );
-	i = fread( template2, 1, sizeof( template2 ) - 1, m_t );
-	template2[ i ] = '\0';
-	fclose( m_t );
-	for( i = 0, strcpy( the_whole_thing, template ); i <
-		cfg_n_modules; i++ )
-	{
-		if( tmp2 )
-			free( tmp2 );
-		tmp2 = strdup( the_whole_thing );
-		snprintf( tmp, sizeof( tmp ), template2, buf[ i ],
-			"%s" );
-		snprintf( the_whole_thing, sizeof( the_whole_thing ),
-			tmp2, tmp );
-	}
-	if( !tmp2 )
-		strcpy( the_whole_thing, template ); /* FIXME */
-	else
-	{
-		free( tmp2 );
-		tmp2 = strdup( the_whole_thing );
-		snprintf( the_whole_thing, sizeof( the_whole_thing ),
-			tmp2, "" );
-	}
-	puts( the_whole_thing );
 }
 
