@@ -163,7 +163,7 @@ void read_whats_there( int fd )
 	int *buf_size; /* size of this buffer */
 	get_pointers( fd, &buf_size, &b, &p );
 	/* enlarge buffer if necessary */
-	if( *p - *b == *buf_size )
+	if( *p - *b >= *buf_size - 1 )
 	{
 		q = *b; /* save old buffer start */
 		*b = realloc( *b, *buf_size = *buf_size << 1 );

@@ -36,7 +36,7 @@ extern char **buf; /* modules' outputs */
 "%c"	{
 		if( files[ n ] -> n -> n_children )
 		{
-			files[ n ] -> c = 0;
+			files[ n ] -> c = 1;
 			push( files[ n ] -> n -> children[ 0 ] );
 		}
 	}
@@ -49,7 +49,7 @@ extern char **buf; /* modules' outputs */
 		pop();
 		if( files[ n ] -> c < files[ n ] -> n -> n_children )
 			push( files[ n ] -> n -> children[ files[ n ]
-				-> c++ + 1 ] );
+				-> c++ ] );
 	}
 %%
 
