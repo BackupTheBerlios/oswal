@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+	"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+<refentry id="oswal">
+
+<refmeta>
+<refentrytitle>OSWAL - OSWAL Systems Watch And Log</refentrytitle>
+<manvolnum>1</manvolnum>
+</refmeta>
+
+<refnamediv>
+<refname>oswal</refname>
+<refname>loader</refname>
+<refname>oswal.conf</refname>
+<refpurpose>Print system information via CGI</refpurpose>
+</refnamediv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>
+OSWAL (OSWAL Systems Watch And Log) lets you monitor a system from afar.
+It consists of several parts: the main programme, a module loader, a
+configuration file and modules and data files. The last three items are
+meant to be configurable by the user.
+</para>
+<refsect2><title>Main programme</title>
+<para>
+The main programme is usually called <command>oswal</command>, but can
+be renamed at will. Its task is to parse the configuration file, to call
+the loader and to assemble the modules' output into a document.
+</para>
+</refsect2>
+<refsect2><title>Loader</title>
+<para>
+The <command>loader</command> part of OSWAL loads a module, passing it
+data from <command>oswal</command>, reads and verifies the module's
+output and sends it back to <command>oswal</command>.
+</para>
+</refsect2>
+<refsect2><title>Configuration file</title>
+<para>
+The configuration file, <filename>oswal.conf</filename>, specifies the
+modules and how to put them together. Its format is described later on
+in this document.
+</para>
+</refsect2>
+<refsect2><title>Modules</title>
+<para>
+Modules are small programmes (usually shell scripts) which gather
+information from the system, format it in XHTML and print it. They are
+meant to be compact and specific, while the general work is done by
+OSWAL.
+</para>
+</refsect2>
+</refsect1>
+<refsect1><title>HOW IT WORKS</title>
+<para>
+An HTTP User Agent makes a request for the <command>oswal</command> CGI.
+The webserver launches it. The configuration file is parsed and for each
+module mentioned therein the <command>loader</command> component
+launched. That launches the module and sends any data specified with the
+<code>header</code> keyword to the module's standard input. The module
+prints a status reply and a fragment of XHTML code to its standard
+output and terminated; this is read by the <command>loader</command>
+which then validates the fragment and eventually sends it to
+<command>oswal</command>.
+</para>
+</refsect1>
+<refsect1><title>CONFIGURATION FILE FORMAT</title>
+<para>Here is an example configuration file
+<example><title />
+<programlisting><![CDATA[/* multiline comments work just like in C
+ * (i. e., they cannot be nested)
+ */
+document { // this is how the configuration file starts
+	template = "sample1/data/document" # the main template
+	fragment "heading" { # a subordinate block
+		template = "sample1/data/heading" /* it has a template
+						   * of its own
+						   */
+		module "uname" { // a module
+			location = "sample1/modules/uname.sh"
+			header "Style: terse" // module-specific data
+		}
+	}
+	fragment "list of modules" {
+		template = "sample1/data/list"
+		// fragments can contain other fragments
+		fragment "uname (again)" {
+			template = "sample1/data/item"
+			module "uname 2" {
+				location = "sample1/modules/uname.sh"
+				header "Style: full"
+			}
+		}
+	}
+}]]></programlisting>
+</example>
+Whitespace consisting of ASCII characters 0x09 (horizontal tab), 0x0a
+(newline), 0x0d (carriage return) and 0x20 (space) is ignored. Strings
+start with `"', end with the first subsequent `"' and can contain any
+characters except 0x00 and `"'. In particular, strings can contain
+linebreaks. Single-line comments start with either `#' or `//' and
+continue until the end of line (a newline). Multi-line comments start
+with `/*' and end with the first subsequent `*/'. Comments are ignored.
+The comment characters are not parsed specially within strings, i. e.
+<example><title />
+<programlisting><![CDATA["hello /* world */"]]></programlisting>
+</example>
+specifies the string <code>"hello /* world */"</code>, not
+<code>"hello "</code>.
+</para>
+<!-- EBNF doesn't seem to translate to manpages to well yet. Pity.
+<para>
+Complete specification in EBNF:
+</para>
+<productionset><title>Configuration format</title>
+<production>
+	<lhs>document</lhs>
+	<rhs>'document' '{' <nonterminal>template</nonterminal>
+		<nonterminal>fragment</nonterminal>* '}'
+<sbr />
+	</rhs>
+</production>
+<production>
+	<lhs>fragment</lhs>
+	<rhs>'fragment' <nonterminal>string</nonterminal> '{'
+		<nonterminal>template</nonterminal>
+		<nonterminal>fragment</nonterminal>* '}' |
+		'module' <nonterminal>string</nonterminal> '{'
+		<nonterminal>location</nonterminal>
+		<nonterminal>header</nonterminal>* '}'
+<sbr />
+	</rhs>
+</production>
+<production>
+	<lhs>template</lhs>
+	<rhs>'template' '=' <nonterminal>string</nonterminal><sbr />
+	</rhs>
+</production>
+</productionset>
+-->
+</refsect1>
+<refsect1><title>MODULES</title>
+<para>
+A module is an executable file (i. e., capable of being started via the
+<citerefentry><refentrytitle>exec</refentrytitle>
+<manvolnum>2</manvolnum></citerefentry> call). Its purpose is to collect
+and format information on a specific topic. The technical requirements
+are that the first line it prints on its standard output be
+`<code>STATUS <varname>n</varname></code>', where <varname>n</varname>
+is a non-negative base 10 number indicating whether the subsequent
+output should be considered further (0 iff yes) and that the subsequent
+output be a fragment of XHTML code unless <varname>n</varname> is a
+nonzero value.
+</para>
+<para>
+Output starting with the second line is considered to be what should be
+eventually sent back to the user. It is validated by the
+<command>loader</command> and may be discarded if validation fails.
+Otherwise, it is sent to <command>oswal</command>.
+</para>
+<para>
+If <code>header</code> directives are specified for a module, the
+<command>loader</command> will send the correspoding strings to the
+module's standard input, separated by 0x0a (newline) characters.
+</para>
+<para>
+This is an extremely simple module, implemented as a <citerefentry>
+<refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+script
+<example><title />
+<programlisting><![CDATA[#!/bin/sh
+echo STATUS 0
+echo <p>Hello, world!</p>]]></programlisting>
+</example>
+</para>
+</refsect1>
+<refsect1><title>TEMPLATES</title>
+<para>
+XHTML code surrounding module output is stored in separate files. These
+are specified by <code>template</code> directives in the configuration
+file. The files must be readable by the <command>oswal</command> process
+and should contain bits of XHTML code.
+</para>
+<para>
+Several character sequences are substituted if they are encountered in a
+template file. Specifically, each `%%' is substituted by `%', each `%d'
+is substituted by the string following the <code>fragment</code> keyword
+corresponding to the current template file and each `%c' is substituted
+by the concatenation of the evaluated results of all objects (i. e.,
+fragments and modules) contained within the <code>fragment</code>
+corresponding to the current template file.
+</para>
+<para>
+These substitutions allow the user to define complex hiearachies of
+templates by relatively simple means. All other characters are copied
+verbatim.
+</para>
+</refsect1>
+<refsect1><title>CGI CONSIDERATIONS</title>
+<para>
+<command>oswal</command> implements a subset of the CGI specification.
+Just put it into a <filename>cgi-bin/</filename> directory, with
+<filename>loader</filename> and <filename>oswal.conf</filename> in the
+same directory and make sure that all other necessary files are
+accessible.
+</para>
+</refsect1>
+<refsect1><title>BUGS</title>
+<para>
+Too many to enumerate here.
+</para>
+</refsect1>
+</refentry>
+
