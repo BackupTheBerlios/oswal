@@ -2,6 +2,7 @@
 # include <stdio.h>
 # include <stdlib.h> /* for atoi */
 # include <sys/time.h>
+# include <string.h>
 # include "mod_response.tab.h"
 # include "def_read.h"
 
@@ -20,8 +21,7 @@ DIGIT [0-9]
 %%
 ^STATUS[ ][0-9]+$ {
 		mod_response_lval.integer =
-			atoi( mod_response_text + sizeof( "STATUS " ) -
-			1 );
+			atoi( mod_response_text + sizeof( "STATUS" ) );
 		BEGIN non_xml;
 		return STATUS;
 	}

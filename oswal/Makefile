@@ -1,17 +1,20 @@
-CC = gcc -Wall -ansi -g
+CC = gcc -Wall -ansi -g 
+CFLAGS = `xml2-config --cflags`
+LDFLAGS = `xml2-config --libs`
+CCF = $(CC) $(CFLAGS)
 all: main loader
 %.lex.o : %.l %.y
 	flex -o$*.lex.c -P$*_ $*.l
 	bison -d -p $*_ -b $* $*.y
-	$(CC) -c -o $*.lex.o $*.lex.c
-	$(CC) -c -o $*.tab.o $*.tab.c
+	$(CCF) -c -o $*.lex.o $*.lex.c
+	$(CCF) -c -o $*.tab.o $*.tab.c
 %.tab.o : %.l %.y
 	flex -o$*.lex.c -P$*_ $*.l
 	bison -d -p $*_ -b $* $*.y
-	$(CC) -c -o $*.lex.o $*.lex.c
-	$(CC) -c -o $*.tab.o $*.tab.c
+	$(CCF) -c -o $*.lex.o $*.lex.c
+	$(CCF) -c -o $*.tab.o $*.tab.c
 %.o : %.c
-	$(CC) -c -o $@ $<
+	$(CCF) -c -o $@ $<
 main: main.o cfg_file.lex.o cfg_file.tab.o
 loader: loader.o main_request.lex.o main_request.tab.o \
 	mod_response.lex.o mod_response.tab.o def_read.o

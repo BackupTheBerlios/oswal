@@ -2,6 +2,9 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
+# include <libxml/xmlmemory.h>
+# include <libxml/parser.h>
+# include "msgs.h"
 
 # define MOD_OK 0
 # define MOD_FAILURE 1
@@ -11,7 +14,6 @@ char *response_str; /* what we actually send back */
 
 int erroneous_xml( char *data );
 char *make_err_response( int s );
-
 %}
 
 %union
@@ -40,10 +42,31 @@ XML
 
 %%
 
-int erroneous_xml( char *data ) /* FIXME: implement */
+/**
+ * check whether a code fragment is valid
+ * @param data the fragment
+ * @return 0 iff the fragment is valid
+ */
+int erroneous_xml( char *data )
 {
-	/*return strchr( data, '<' ) != data;*/
+	int data_length = strlen( data ), 
+		encoding_length = sizeof( "UTF-8" ) - 1;
+	char document[ XHTML_FRAG_TEST_DOC_LENGTH + data_length +
+		encoding_length ];
+	xmlDocPtr xml_doc;
+	/* libxml prints error messages to stderr; the correct way to
+	 * prevent that seems to involve too much work, hence this:
+	 */
+	close( 2 );
+	snprintf( document, sizeof( document ), XHTML_FRAG_TEST_DOC,
+		"UTF-8", data );
+	xml_doc = xmlParseMemory( document, sizeof( document ) );
+	if( !xml_doc )
+		return 1;
+	xmlFreeDoc( xml_doc );
 	return 0;
+	/* eventually:
+	return !xmlValidateDocument( xml_val_ctxt, xml_doc ); */
 }
 
 char *make_err_response( int s )
@@ -56,7 +79,8 @@ char *make_err_response( int s )
 
 int mod_response_error( char *msg )
 {
-	printf( __FILE__ ":%d: %s", __LINE__, msg );
+	printf( "<pre>" __FILE__ ":%d: %s</pre>", __LINE__, msg );
+		/* FIXME: ... */
 	exit( 1 );
 }
 
