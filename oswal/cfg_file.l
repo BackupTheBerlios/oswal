@@ -32,6 +32,12 @@
 template { /* keywords */
 		return TEMPLATE;
 	}
+document {
+		return DOCUMENT;
+	}
+fragment {
+		return FRAGMENT;
+	}
 module[-_]template {
 		return MODULE_TEMPLATE;
 	}

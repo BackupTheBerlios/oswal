@@ -7,10 +7,19 @@
 # define MAX_HEADERS 0x100
 # define PATH_MAX 1024
 
-struct module_def *current = NULL;
+struct module_def *current_module = NULL;
 int foo = PATH_MAX;
 char *headers[ MAX_HEADERS ], path[ PATH_MAX ];
 int n_headers = 0;
+struct node root = 
+{
+	.parent = NULL,
+	.children = NULL,
+	.n_children = 0,
+	.description = "",
+	.location = NULL
+};
+struct node *root_template = &root, *current = NULL;
 
 extern struct module_def *cfg_modules;
 extern char *cfg_template, *cfg_module_template;
@@ -24,61 +33,87 @@ void new_module_def( char *description );
 
 %start cfg_file
 %token TEMPLATE MODULE_TEMPLATE LOCATION MODULE HEADER STRING EQUALS
-%token OB CB
+%token OB CB DOCUMENT FRAGMENT
 
 %%
 
-cfg_file: 
-	template
-	module_template
-	modules
+cfg_file:
+	document
 
-template:
-	TEMPLATE OB LOCATION EQUALS STRING CB
+document:
+	DOCUMENT OB template 
 	{
-		if( realpath( $5, path ) == NULL )
-			cfg_file_error(
-			"Template path could not be resolved." );
-		/* FIXME: we should also check whether it is readable */
-		cfg_template = strdup( path );
-	}
-
-module_template:
-	MODULE_TEMPLATE OB LOCATION EQUALS STRING CB
-	{
-		if( realpath( $5, path ) == NULL )
-			cfg_file_error( 
-			"Module template path could not be resolved." );
-		/* FIXME: we should also check whether it is readable */
-		cfg_module_template = strdup( path );
+		root.location = strdup( $3 );
+		current = &root;
 		cfg_n_modules = 0;
 	}
+	fragments CB
 
-modules:
-	| modules module
+fragments:
+	| fragments fragment
+
+fragment:
+	FRAGMENT STRING OB template
 	{
+		struct node m =
+		{
+			.parent = current,
+			.children = NULL,
+			.n_children = 0,
+			.description = strdup( $2 ),
+			.location = strdup( $4 )
+		}, *n;
+		current -> children = realloc( current -> children,
+			++( current -> n_children ) * sizeof(
+			struct node * ) );
+		n = ( struct node * )malloc( sizeof( struct node ) );
+		*n = m;
+		current -> children[ current -> n_children - 1 ] = n;
+		current = n;
+	}
+	fragments CB
+	{
+		current = current -> parent;
+	}
+	| module
+	{
+		current -> children = realloc( current -> children,
+			++( current -> n_children ) * sizeof(
+			struct node * ) );
+		current -> children[ current -> n_children - 1 ] = NULL;
 		cfg_n_modules++;
 	}
 
 module:
-	MODULE STRING OB module_defs CB
+	{
+		n_headers = 0;
+	}
+	MODULE STRING OB location headers CB
 	{
 		new_module_def( $2 );
 	}
 
-module_defs:
-	| module_defs module_def
+headers:
+	| headers header
 
-module_def:
+template:
+	TEMPLATE EQUALS STRING
+	{
+		$$ = $3;
+	}
+
+location:
 	LOCATION EQUALS STRING
 	{
 		if( realpath( $3, path ) == NULL )
 			cfg_file_error( "Module not found." );
 	}
-	| HEADER EQUALS STRING
+
+header:
+	HEADER STRING
 	{
 		if( n_headers < MAX_HEADERS )
-			headers[ n_headers++ ] = strdup( $3 );
+			headers[ n_headers++ ] = strdup( $2 );
 	}
 
 %%
@@ -90,11 +125,11 @@ void new_module_def( char *description )
 	int i, s;
 	char *h, *g;
 	if( cfg_modules == NULL )
-		current = cfg_modules = d;
+		current_module = cfg_modules = d;
 	else
 	{
-		current -> next = d;
-		current = d;
+		current_module -> next = d;
+		current_module = d;
 	}
 	d -> next = NULL;
 	d -> description = strdup( description );
