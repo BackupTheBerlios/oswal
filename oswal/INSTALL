@@ -1,0 +1,11 @@
+These are the installation instructions for OSWAL. See README for more
+information.
+
+Build the executables (main and loader) using
+	make
+and put them into your cgi-bin/ (or similar) directory. Add an
+oswal.conf file in the same directory and template files and modules
+where appropriate.
+
+EOF (yes, it's that simple).
+

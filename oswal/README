@@ -1,0 +1,21 @@
+OSWAL - OSWAL Systems Watch And Log
+
+OSWAL is a utility which provides system information via HTTP. It
+requires a CGI-capable web server.
+
+This is a very early release of OSWAL, which means that there are lots
+of bugs left for the user to discover.
+
+Build requirements:
+- gcc 3 (or any similar C compiler and linker),
+- bison,
+- flex (version 2.5.4 or similar; version 2.5.31 is buggy) and
+- libxml2 (with the xml-config script in your PATH).
+
+See INSTALL for instructions regarding installation.
+
+An example set of configuration data is available from the OSWAL
+homepage, http://oswal.berlios.de/, in the file sample1.tar.gz.
+
+OSWAL is GPLed. See Copying for details.
+
