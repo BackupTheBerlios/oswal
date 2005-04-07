@@ -43,20 +43,30 @@ char *make_err_response( int s );
 
 %start response
 
-%token <integer> STATUS
 %token <string> XML
+%token <integer> STATUS
+%type <string> xml
 
 %%
 
-response:
-STATUS
-XML
+response: status xml
 	{
-		if( $1 == MOD_OK && !erroneous_xml( $2 ) )
-			response_str = $2;
-		else
-			response_str = make_err_response( $1 );
-		puts( response_str );
+		puts( erroneous_xml( $2 ) ? make_err_response( MOD_OK ):
+			$2 );
+	}
+
+status: STATUS
+	{
+		if( $1 != MOD_OK )
+		{
+			puts( make_err_response( $1 ) );
+			return 0;
+		}
+	}
+
+xml: XML
+	{
+		$$ = $1;
 	}
 
 %%
