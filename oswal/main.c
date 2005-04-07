@@ -20,15 +20,16 @@
 # include <sys/time.h>
 # include <string.h>
 # include <stdio.h>
+# include <stdlib.h>
+# include <unistd.h>
 # include "cfg_data.h"
+# include "cgi.h"
 
 /* initial size of a buffer for the output of one module */
 # define INIT_BUF_SIZE 0x400
 
 char *cfg_file = "oswal.conf"; /* any good way to make it variable? */
 extern FILE *cfg_file_in;
-/*extern FILE *template_in;
-extern struct node *root_template;*/
 struct module_def *cfg_modules; /* list of modules */
 char *cfg_loader_path = "loader", /* FIXME: should be variable */
      *cfg_template, *cfg_module_template;
@@ -37,6 +38,10 @@ int cfg_n_modules, /* number of modules */
 char **buf, **ptr;	  /* ... for storing data about the buffers */
 fd_set fds; /* initial list of file descriptors to read from */
 
+extern void cfg_file_parse();
+extern void template_init();
+extern void template_lex();
+
 void read_whats_there( int fd );
 void get_pointers( int fd, int **buf_size, char ***p_buf, char ***p_ptr );
 void compose_xhtml();
@@ -44,6 +49,15 @@ void compose_xhtml();
 int main( int argc, char *argv[] )
 {
 	int nfds, done_reading = 0, i;
+	char *content_type, *accept;
+	if( ( accept = getenv( "HTTP_ACCEPT" ) ) )
+		content_type = get_content_type( accept );
+	else
+		content_type = "application/xhtml+xml";
+# define CONTENT_TYPE_HDR "Content-Type: "
+	write( 1, CONTENT_TYPE_HDR, sizeof( CONTENT_TYPE_HDR ) - 1 );
+	write( 1, content_type, strlen( content_type ) );
+	write( 1, "\n\n", 2 );
 	if( !( cfg_file_in = fopen( cfg_file, "r" ) ) )
 		/* FIXME: some kind of error message necessary */
 		return 1;
@@ -168,7 +182,6 @@ int main( int argc, char *argv[] )
 				}
 		}
 	}
-	/*template_in = fopen( root_template -> location, "r" );*/
 	template_init();
 	template_lex();
 	return 0;
